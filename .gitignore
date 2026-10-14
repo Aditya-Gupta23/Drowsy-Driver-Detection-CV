@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+.env
+.DS_Store
+
+# Dataset images and archives
+archive/
+*.zip
+*.jpg
+*.jpeg
+*.png
+
+# Model checkpoints (large files)
+*.pth
+*.pt
+
+# Keep the selected model checkpoint if you explicitly want it on GitHub
+# Uncomment the next line only if you want to track all .pth files:
+# !model_artifacts/drowsiness_model_25ep_best.pth

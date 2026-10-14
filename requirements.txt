@@ -1,0 +1,20 @@
+# Driver Drowsiness Detection — Python 3.10
+# Tested environment: macOS Apple Silicon (M2), PyTorch MPS
+
+# Deep learning
+torch==2.7.0
+torchvision==0.22.0
+
+# Image processing and webcam
+numpy==1.26.4
+opencv-contrib-python==4.10.0.84
+Pillow>=10.0,<12.0
+
+# Facial landmark detection
+mediapipe==0.10.21
+
+# Training metrics / evaluation
+scikit-learn>=1.4,<2.0
+
+# Configuration and training-history JSON use Python's built-in json module.
+# pathlib, time, math, collections, copy, subprocess are also built-in.

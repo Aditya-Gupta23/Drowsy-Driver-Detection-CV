@@ -1,0 +1,23 @@
+{
+  "architecture": "mobilenet_v3_small",
+  "classes": [
+    "active",
+    "fatigue"
+  ],
+  "class_to_idx": {
+    "active": 0,
+    "fatigue": 1
+  },
+  "image_size": 224,
+  "mean": [
+    0.485,
+    0.456,
+    0.406
+  ],
+  "std": [
+    0.229,
+    0.224,
+    0.225
+  ],
+  "best_validation_macro_f1": 0.9442131095169336
+}
