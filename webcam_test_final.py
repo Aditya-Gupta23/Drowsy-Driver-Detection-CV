@@ -2,9 +2,13 @@ import cv2
 import json
 import time
 import subprocess
+import threading
 import math
 from pathlib import Path
 from collections import deque
+
+import numpy as np
+import sounddevice as sd
 
 import torch
 from torch import nn
@@ -55,13 +59,51 @@ def calculate_ear(landmarks, indices, width, height):
     return 0.0 if horizontal < 1 else (vertical1 + vertical2) / (2.0 * horizontal)
 
 
-def play_alert():
+def play_buzzer(frequency=880, duration=1.2, sample_rate=44100, pulses=6):
+    """Generate a pulsating buzzer tone and play it in a background thread."""
+    def _buzz():
+        try:
+            t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+            # Pulsating envelope: square wave at `pulses` Hz chops the sine into bursts
+            envelope = (np.sin(2 * np.pi * pulses * t) > 0).astype(np.float32)
+            tone = 0.8 * np.sin(2 * np.pi * frequency * t).astype(np.float32) * envelope
+            sd.play(tone, samplerate=sample_rate)
+            sd.wait()
+        except Exception:
+            pass
+    threading.Thread(target=_buzz, daemon=True).start()
+
+
+def play_alert(reason="general"):
+    """
+    Play distinct audio/voice alerts based on the trigger cause:
+    - 'eye_closure': Prolonged eye closure (critical danger)
+    - 'fatigue_and_yawn': Combined fatigue classifier + yawning
+    - 'fatigue': Continuous facial fatigue classifier prediction
+    - 'yawn': Yawn detected from Mouth Aspect Ratio (MAR)
+    """
     try:
-        subprocess.Popen(
-            ["osascript", "-e", "beep 1"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
-        )
+        if reason == "eye_closure":
+            # Most critical — high freq, rapid pulses
+            play_buzzer(frequency=1000, duration=1.5, pulses=8)
+            subprocess.Popen(["afplay", "/System/Library/Sounds/Basso.aiff"])
+            subprocess.Popen(["say", "-r", "100", "Wake up! Don't Sleep"])
+        elif reason == "fatigue_and_yawn":
+            # High urgency — strong buzz
+            play_buzzer(frequency=880, duration=1.2, pulses=6)
+            subprocess.Popen(["afplay", "/System/Library/Sounds/Basso.aiff"])
+            subprocess.Popen(["say", "-r", "200", "Danger! Heavy drowsiness detected! Pull over!"])
+        elif reason == "fatigue":
+            # Medium urgency — moderate buzz
+            play_buzzer(frequency=740, duration=1.0, pulses=4)
+            subprocess.Popen(["say", "-r", "200", "Drowsiness alert! Stay focused on the road!"])
+        elif reason == "yawn":
+            # Low urgency — gentle buzz
+            play_buzzer(frequency=600, duration=0.8, pulses=3)
+            subprocess.Popen(["say", "-r", "190", "Yawning detected! Consider taking a break!"])
+        else:
+            play_buzzer(frequency=520, duration=0.5, pulses=2)
+            subprocess.Popen(["afplay", "/System/Library/Sounds/Sosumi.aiff"])
     except OSError:
         pass
 
@@ -244,7 +286,16 @@ try:
 
         now = time.monotonic()
         if any_alert and now - last_alert_time >= ALERT_COOLDOWN:
-            play_alert()
+            if fatigue_alert and yawn_detected:
+                play_alert("fatigue_and_yawn")
+            elif eye_closure_alert:
+                play_alert("eye_closure")
+            elif fatigue_alert:
+                play_alert("fatigue")
+            elif yawn_detected:
+                play_alert("yawn")
+            else:
+                play_alert()
             last_alert_time = now
 
         # ----- Display values -----
