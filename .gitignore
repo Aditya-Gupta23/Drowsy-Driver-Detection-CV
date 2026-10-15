@@ -14,8 +14,8 @@ archive/
 *.png
 
 # Model checkpoints (large files)
-*.pth
-*.pt
+# *.pth
+# *.pt
 
 # Keep the selected model checkpoint if you explicitly want it on GitHub
 # Uncomment the next line only if you want to track all .pth files:
